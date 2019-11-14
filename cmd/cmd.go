@@ -1,9 +1,10 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"os"
 
+	"github.com/takutakahashi/container-api-gateway/pkg/api"
 	"github.com/urfave/cli"
 )
 
@@ -15,42 +16,26 @@ func main() {
 	app.Version = "0.0.1"
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
-			Name:  "lang, l",
-			Value: "english",
-			Usage: "language for the greeting",
-		},
-		cli.StringFlag{
-			Name:  "meridian, m",
-			Value: "AM",
-			Usage: "meridian for the greeting",
-		},
-		cli.StringFlag{
-			Name:  "time, t",
-			Value: "07:00",
-			// ``で囲むとhelp時のPlaceholderとしても使える
-			// https://github.com/urfave/cli#placeholder-values
-			Usage: "`your time` for the greeting",
-		},
-		cli.StringFlag{
-			Name:  "aaa, a",
-			Value: "sample",
-			// default値をValueからではなくEnvから取る
-			EnvVar: "SAMPLE_ENV",
+			Name:  "config, c",
+			Usage: "config.yaml filepath",
 		},
 	}
-	app.Action = func(c *cli.Context) error {
-		fmt.Println("-- Action --")
+	app.Action = action
+	app.Run(os.Args)
+}
 
-		fmt.Printf("c.NArg()        : %+v\n", c.NArg())
-		fmt.Printf("c.Args()        : %+v\n", c.Args())
-		fmt.Printf("c.Args().Get(0) : %+v\n", c.Args().Get(0))
-		fmt.Printf("c.Args()[0]     : %+v\n", c.Args()[0])
-		fmt.Printf("c.FlagNames     : %+v\n", c.FlagNames())
-
-		// version表示
-		cli.ShowVersion(c)
+func action(c *cli.Context) error {
+	configPath := c.String("config")
+	if configPath == "" {
+		cli.ShowAppHelp(c)
 		return nil
 	}
-
-	app.Run(os.Args)
+	server := api.Server{}
+	err := server.LoadConfig(configPath)
+	if err != nil {
+		log.Fatal(err)
+		return nil
+	}
+	server.Start()
+	return nil
 }

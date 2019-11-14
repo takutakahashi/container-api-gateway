@@ -1,0 +1,29 @@
+endpoints:
+  - path: /test
+    method: GET
+    async: false
+    container:
+      image: busybox
+      command:
+        - echo
+        - hello
+  - path: /async
+    method: GET
+    async: true
+    container:
+      image: busybox
+      command:
+        - echo
+        - hello
+  - path: /post
+    method: POST
+    async: true
+    params:
+      - name: fullname
+        type: string
+        optional: true
+    container:
+      image: busybox
+      command:
+        - echo
+        - {{ fullname }}
