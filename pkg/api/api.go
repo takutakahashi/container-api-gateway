@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"io/ioutil"
 
 	"github.com/takutakahashi/container-api-gateway/pkg/types"
@@ -28,5 +29,7 @@ func (s *Server) LoadConfig(configPath string) error {
 
 // Start starts api server
 func (s *Server) Start() {
+	fmt.Println(s.config)
+	fmt.Println(s.config.Endpoints[2].BuildCommand())
 
 }

@@ -26,4 +26,4 @@ endpoints:
       image: busybox
       command:
         - echo
-        - {{ fullname }}
+        - "{{ fullname }}"
