@@ -3,6 +3,11 @@ package api
 import (
 	"io/ioutil"
 
+	"github.com/takutakahashi/container-api-gateway/pkg/handler"
+
+	"github.com/labstack/echo"
+	"github.com/labstack/echo/middleware"
+
 	"github.com/takutakahashi/container-api-gateway/pkg/types"
 	"gopkg.in/yaml.v2"
 )
@@ -28,5 +33,11 @@ func (s *Server) LoadConfig(configPath string) error {
 
 // Start starts api server
 func (s *Server) Start() {
-	s.config.Endpoints[2].BuildCommand()
+	e := echo.New()
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
+	for _, endpoint := range s.config.Endpoints {
+		e.GET(endpoint.Path, handler.GetHandler(endpoint))
+	}
+	e.Start(":8080")
 }

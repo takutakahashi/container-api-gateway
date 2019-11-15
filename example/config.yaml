@@ -15,6 +15,18 @@ endpoints:
       command:
         - echo
         - hello
+  - path: /hello
+    method: GET
+    async: false
+    params:
+      - name: fullname
+        type: string
+        optional: false
+    container:
+      image: busybox
+      command:
+        - echo
+        - "hello, {{ fullname }}"
   - path: /post
     method: POST
     async: true

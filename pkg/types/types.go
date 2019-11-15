@@ -2,6 +2,7 @@ package types
 
 import (
 	"bytes"
+	"fmt"
 	"html/template"
 	"strings"
 
@@ -34,8 +35,8 @@ type Container struct {
 type Param struct {
 	Name     string `yaml:"name"`
 	Type     string `yaml:"type"`
-	Value    string
-	Optional bool `yaml:"optional"`
+	Value    string `yaml:"default"`
+	Optional bool   `yaml:"optional"`
 }
 
 // BuildCommand build command with params
@@ -56,5 +57,10 @@ func (e *Endpoint) BuildCommand() []string {
 		}
 		result = append(result, cmd)
 	}
+	fmt.Println(result)
 	return result
+}
+
+func (e *Endpoint) Execute() string {
+	return strings.Join(e.BuildCommand(), ",")
 }
