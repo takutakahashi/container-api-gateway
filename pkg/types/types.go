@@ -1,5 +1,13 @@
 package types
 
+import (
+	"bytes"
+	"html/template"
+	"strings"
+
+	"github.com/thoas/go-funk"
+)
+
 func NewConfig() Config {
 	return Config{
 		Endpoints: []Endpoint{},
@@ -13,7 +21,7 @@ type Endpoint struct {
 	Path      string    `yaml:"path"`
 	Method    string    `yaml:"method"`
 	Async     bool      `yaml:"async"`
-	Params    Params    `yaml:"params"`
+	Params    []Param   `yaml:"params"`
 	Container Container `yaml:"container"`
 }
 
@@ -30,13 +38,23 @@ type Param struct {
 	Optional bool `yaml:"optional"`
 }
 
-type Params []Param
-
-func (ps *Params) BuildCommand(base []string) []string {
-	return base
-}
-
 // BuildCommand build command with params
 func (e *Endpoint) BuildCommand() []string {
-	return e.Container.Command
+	result := make([]string, len(e.Container.Command))
+	for _, cmd := range e.Container.Command {
+		params := funk.Filter(e.Params, func(p Param) bool {
+			return strings.Contains(cmd, p.Name)
+		}).([]Param)
+		if len(params) != 0 {
+			for _, param := range params {
+				cmd = strings.ReplaceAll(cmd, param.Name, ".Value")
+				tmpl, _ := template.New(param.Name).Parse(cmd)
+				var doc bytes.Buffer
+				tmpl.Execute(&doc, param)
+				cmd = doc.String()
+			}
+		}
+		result = append(result, cmd)
+	}
+	return result
 }
