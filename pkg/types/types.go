@@ -9,12 +9,6 @@ import (
 	"github.com/thoas/go-funk"
 )
 
-func NewConfig() Config {
-	return Config{
-		Endpoints: []Endpoint{},
-	}
-}
-
 type Config struct {
 	Endpoints []Endpoint `yaml:"endpoints"`
 }
@@ -62,5 +56,6 @@ func (e *Endpoint) BuildCommand() []string {
 }
 
 func (e *Endpoint) Execute() string {
+	// TODO: impl
 	return strings.Join(e.BuildCommand(), ",")
 }

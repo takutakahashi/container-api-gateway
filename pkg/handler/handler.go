@@ -7,6 +7,7 @@ import (
 	"github.com/takutakahashi/container-api-gateway/pkg/types"
 )
 
+// GetHandler generate handler from endpoint
 func GetHandler(endpoint types.Endpoint) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		params := make([]types.Param, len(endpoint.Params))

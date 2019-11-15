@@ -31,12 +31,13 @@ func (s *Server) LoadConfig(configPath string) error {
 	return nil
 }
 
-// Start starts api server
+// Start api server
 func (s *Server) Start() {
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 	for _, endpoint := range s.config.Endpoints {
+		// TODO: use multiple method
 		e.GET(endpoint.Path, handler.GetHandler(endpoint))
 	}
 	e.Start(":8080")
