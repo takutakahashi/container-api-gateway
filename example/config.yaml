@@ -18,7 +18,6 @@ endpoints:
     async: false
     params:
       - name: fullname
-        type: string
         optional: false
     container:
       image: ubuntu
@@ -31,7 +30,6 @@ endpoints:
     async: true
     params:
       - name: fullname
-        type: string
         optional: true
     container:
       image: busybox
