@@ -90,6 +90,9 @@ func (e *Endpoint) Execute() (*bytes.Buffer, *bytes.Buffer, error) {
 	if err := cli.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{}); err != nil {
 		return nil, nil, err
 	}
+	if e.Async {
+		return nil, nil, nil
+	}
 	if _, err = cli.ContainerWait(ctx, resp.ID); err != nil {
 		return nil, nil, err
 	}
