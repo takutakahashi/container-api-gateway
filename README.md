@@ -1,5 +1,11 @@
 # container-api-gateway
 
+**WARNING**
+This app has NO concern about security issues.
+DO NOT USE in production and EXPOSE the Internet.
+
+---
+
 This is the frontend API with common Docker container
 
 ## Requirement
