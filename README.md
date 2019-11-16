@@ -98,5 +98,34 @@ Output:
 {"stdout":"hello, bob\n","stderr":""}
 ```
 
+### 2. Expose Environment Variable from Host
+
+You can use specified host's environment variables
+
+```
+  - path: /hello_with_env
+    method: GET
+    params:
+      - name: fullname
+    env:
+      - GREET
+    container:
+      image: ubuntu
+      command:
+        - "bash"
+        - "-c"
+        - "echo $GREET, {{ fullname }}"
+```
+
+build api:
+```
+$ export GREET="good evening"; cgw --config path/to/config.yaml
+```
+
+Output:
+```
+ % curl "http://localhost:8080/hello_with_env?fullname=bob"
+{"stdout":"good evening, bob\n","stderr":""}
+```
 
 If you want to get all features, please see `example/config.yaml`.

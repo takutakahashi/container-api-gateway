@@ -3,7 +3,9 @@ package types
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"html/template"
+	"os"
 	"strings"
 
 	"github.com/docker/docker/api/types"
@@ -23,6 +25,7 @@ type Endpoint struct {
 	Method    string    `yaml:"method"`
 	Async     bool      `yaml:"async"`
 	Params    []Param   `yaml:"params"`
+	Env       []string  `yaml:"env"`
 	Container Container `yaml:"container"`
 }
 
@@ -72,6 +75,12 @@ func (e *Endpoint) BuildCommand() []string {
 	return result
 }
 
+func (e *Endpoint) BuildEnv() []string {
+	return funk.Map(e.Env, func(key string) string {
+		return fmt.Sprintf("%s=%s", key, os.Getenv(key))
+	}).([]string)
+}
+
 func (e *Endpoint) Execute() (*bytes.Buffer, *bytes.Buffer, error) {
 	ctx := context.Background()
 	cli, err := client.NewEnvClient()
@@ -83,6 +92,7 @@ func (e *Endpoint) Execute() (*bytes.Buffer, *bytes.Buffer, error) {
 	resp, err := cli.ContainerCreate(ctx, &container.Config{
 		Image: e.Container.Image,
 		Cmd:   e.BuildCommand(),
+		Env:   e.BuildEnv(),
 	}, nil, nil, name)
 	if err != nil {
 		return nil, nil, err

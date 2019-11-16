@@ -22,6 +22,18 @@ endpoints:
         - "bash"
         - "-c"
         - "echo hello, {{ fullname }}"
+  - path: /hello_with_env
+    method: GET
+    params:
+      - name: fullname
+    env:
+      - GREET
+    container:
+      image: ubuntu
+      command:
+        - "bash"
+        - "-c"
+        - "echo $GREET, {{ fullname }}"
   - path: /post
     method: POST
     async: true
