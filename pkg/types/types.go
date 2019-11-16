@@ -2,10 +2,14 @@ package types
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"html/template"
 	"strings"
 
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/client"
 	"github.com/thoas/go-funk"
 )
 
@@ -49,13 +53,41 @@ func (e *Endpoint) BuildCommand() []string {
 				cmd = doc.String()
 			}
 		}
-		result = append(result, cmd)
+		if cmd != "" {
+			result = append(result, cmd)
+		}
 	}
-	fmt.Println(result)
 	return result
 }
 
 func (e *Endpoint) Execute() string {
-	// TODO: impl
-	return strings.Join(e.BuildCommand(), ",")
+	ctx := context.Background()
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		panic(err)
+	}
+	name := funk.RandomString(10)
+	cli.ImagePull(ctx, e.Container.Image, types.ImagePullOptions{})
+	resp, err := cli.ContainerCreate(ctx, &container.Config{
+		Image: e.Container.Image,
+		Cmd:   e.BuildCommand(),
+	}, nil, nil, name)
+	if err != nil {
+		panic(err)
+	}
+	if err := cli.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{}); err != nil {
+		panic(err)
+	}
+	if _, err = cli.ContainerWait(ctx, resp.ID); err != nil {
+		panic(err)
+	}
+	out, err := cli.ContainerLogs(ctx, resp.ID, types.ContainerLogsOptions{ShowStdout: true})
+	if err != nil {
+		panic(err)
+	}
+	go cli.ContainerRemove(ctx, resp.ID, types.ContainerRemoveOptions{})
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(out)
+	fmt.Println(buf.String())
+	return buf.String()
 }

@@ -23,10 +23,11 @@ endpoints:
         type: string
         optional: false
     container:
-      image: busybox
+      image: ubuntu
       command:
-        - echo
-        - "hello, {{ fullname }}"
+        - "bash"
+        - "-c"
+        - "echo hello, {{ fullname }}"
   - path: /post
     method: POST
     async: true

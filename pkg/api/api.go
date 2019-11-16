@@ -1,6 +1,8 @@
 package api
 
 import (
+	"encoding/json"
+	"fmt"
 	"io/ioutil"
 
 	"github.com/takutakahashi/container-api-gateway/pkg/handler"
@@ -36,9 +38,14 @@ func (s *Server) Start() {
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+	e.HideBanner = true
 	for _, endpoint := range s.config.Endpoints {
-		// TODO: use multiple method
-		e.GET(endpoint.Path, handler.GetHandler(endpoint))
+		e.Add(endpoint.Method, endpoint.Path, handler.GetHandler(endpoint))
 	}
+	data, err := json.MarshalIndent(e.Routes(), "", "  ")
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(string(data))
 	e.Start(":8080")
 }
