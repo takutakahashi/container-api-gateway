@@ -1,12 +1,10 @@
+port: 8080
 endpoints:
   - path: /test
     method: GET
     async: false
     container:
-      image: busybox
-      command:
-        - echo
-        - hello
+      image: hello-world
   - path: /async
     method: GET
     async: true

@@ -7,6 +7,11 @@ import (
 	"github.com/takutakahashi/container-api-gateway/pkg/types"
 )
 
+type Response struct {
+	Stdout string `json:"stdout" xml:"stdout"`
+	Stderr string `json:"stderr" xml:"stderr"`
+}
+
 // GetHandler generate handler from endpoint
 func GetHandler(endpoint types.Endpoint) echo.HandlerFunc {
 	return func(c echo.Context) error {
@@ -23,6 +28,15 @@ func GetHandler(endpoint types.Endpoint) echo.HandlerFunc {
 			params[i] = param
 		}
 		endpoint.Params = params
-		return c.String(http.StatusOK, endpoint.Execute())
+		stdout, stderr, err := endpoint.Execute()
+		if err != nil {
+			return c.String(http.StatusInternalServerError, err.Error())
+		} else {
+
+			return c.JSON(http.StatusOK, &Response{
+				Stdout: stdout.String(),
+				Stderr: stderr.String(),
+			})
+		}
 	}
 }
