@@ -2,7 +2,6 @@ port: 8080
 endpoints:
   - path: /test
     method: GET
-    async: false
     container:
       image: hello-world
   - path: /async
@@ -15,10 +14,8 @@ endpoints:
         - hello
   - path: /hello
     method: GET
-    async: false
     params:
       - name: fullname
-        optional: false
     container:
       image: ubuntu
       command:
