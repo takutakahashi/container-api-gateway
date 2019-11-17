@@ -15,10 +15,32 @@ spec:
         app: cgw
     spec:
       containers:
-      - image: takutakahashi/continer-api-gateway
+      - image: takutakahashi/container-api-gateway
+        command:
+          - ./cgw
+          - --config
+          - /app/config/api.yaml
         imagePullPolicy: Always
         name: api
+        volumeMounts:
+        - mountPath: /var/run/docker.sock
+          name: docker-sock
+        - mountPath: /app/config
+          name: config
+        envFrom:
+        - secretRef:
+            name: container-api-gateway-env
         ports:
         - containerPort: 8080
           name: http
           protocol: TCP
+      volumes:
+      - name: config
+        configMap:
+          name: container-api-gateway-config
+          items:
+          - key: api.yaml
+            path: api.yaml
+      - name: docker-sock
+        hostPath:
+          path: /var/run/docker.sock

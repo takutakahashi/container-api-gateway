@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"html/template"
+	"io"
 	"os"
 	"strings"
 
@@ -88,7 +89,11 @@ func (e *Endpoint) Execute() (*bytes.Buffer, *bytes.Buffer, error) {
 		return nil, nil, err
 	}
 	name := funk.RandomString(10)
-	cli.ImagePull(ctx, e.Container.Image, types.ImagePullOptions{})
+	progress, err := cli.ImagePull(ctx, e.Container.Image, types.ImagePullOptions{})
+	if err != nil {
+		return nil, nil, err
+	}
+	io.Copy(os.Stdout, progress)
 	resp, err := cli.ContainerCreate(ctx, &container.Config{
 		Image: e.Container.Image,
 		Cmd:   e.BuildCommand(),
