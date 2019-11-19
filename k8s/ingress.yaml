@@ -1,0 +1,14 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: container-api-gateway
+  annotations:
+    networking.gke.io/managed-certificates: container-api-gateway
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /*
+        backend:
+          serviceName: container-api-gateway
+          servicePort: 80
