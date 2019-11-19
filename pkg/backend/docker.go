@@ -17,6 +17,14 @@ import (
 type DockerBackend struct{}
 
 func (b DockerBackend) Execute(e ctypes.Endpoint) (*bytes.Buffer, *bytes.Buffer, error) {
+	if e.Async {
+		go execute(e)
+		return nil, nil, nil
+	}
+	return execute(e)
+}
+
+func execute(e ctypes.Endpoint) (*bytes.Buffer, *bytes.Buffer, error) {
 	ctx := context.Background()
 	cli, err := client.NewEnvClient()
 	if err != nil {
@@ -38,9 +46,6 @@ func (b DockerBackend) Execute(e ctypes.Endpoint) (*bytes.Buffer, *bytes.Buffer,
 	}
 	if err := cli.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{}); err != nil {
 		return nil, nil, err
-	}
-	if e.Async {
-		return nil, nil, nil
 	}
 	if _, err = cli.ContainerWait(ctx, resp.ID); err != nil {
 		return nil, nil, err
