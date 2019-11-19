@@ -13,7 +13,7 @@ type Response struct {
 }
 
 // GetHandler generate handler from endpoint
-func GetHandler(endpoint types.Endpoint) echo.HandlerFunc {
+func GetHandler(endpoint types.Endpoint, b types.BaseBackend) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		params := make([]types.Param, len(endpoint.Params))
 		for i, param := range endpoint.Params {
@@ -28,7 +28,7 @@ func GetHandler(endpoint types.Endpoint) echo.HandlerFunc {
 			params[i] = param
 		}
 		endpoint.Params = params
-		stdout, stderr, err := endpoint.Execute()
+		stdout, stderr, err := b.Execute(endpoint)
 		if err != nil {
 			return c.String(http.StatusInternalServerError, err.Error())
 		} else {
