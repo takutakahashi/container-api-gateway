@@ -9,6 +9,7 @@ import (
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 
+	b "github.com/takutakahashi/container-api-gateway/pkg/backend"
 	"github.com/takutakahashi/container-api-gateway/pkg/types"
 	"gopkg.in/yaml.v2"
 )
@@ -42,8 +43,15 @@ func (s *Server) Start() {
 		return c.String(http.StatusOK, "healty")
 
 	})
+	var backend types.BaseBackend
+	switch s.config.Backend {
+	case "k8s":
+		backend = b.KubernetesBackend{}
+	default:
+		backend = b.DockerBackend{}
+	}
 	for _, endpoint := range s.config.Endpoints {
-		e.Add(endpoint.Method, endpoint.Path, handler.GetHandler(endpoint))
+		e.Add(endpoint.Method, endpoint.Path, handler.GetHandler(endpoint, backend))
 	}
 	e.Start(s.config.GenServerURI())
 }

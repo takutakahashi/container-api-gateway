@@ -1,5 +1,6 @@
 port: 8080
 healthcheckPath: /health
+backend: docker
 endpoints:
   - path: /test
     method: GET
