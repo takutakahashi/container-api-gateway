@@ -17,9 +17,10 @@ import (
 )
 
 type Config struct {
-	Host      string
-	Port      string
-	Endpoints []Endpoint `yaml:"endpoints"`
+	Host       string
+	Port       string
+	HealthPath string     `yaml:"healthcheckPath"`
+	Endpoints  []Endpoint `yaml:"endpoints"`
 }
 type Endpoint struct {
 	Path      string    `yaml:"path"`

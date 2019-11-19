@@ -1,4 +1,5 @@
 port: 8080
+healthcheckPath: /health
 endpoints:
   - path: /test
     method: GET
