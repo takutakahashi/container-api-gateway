@@ -2,6 +2,7 @@ package api
 
 import (
 	"io/ioutil"
+	"net/http"
 
 	"github.com/takutakahashi/container-api-gateway/pkg/handler"
 
@@ -37,6 +38,10 @@ func (s *Server) Start() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 	e.HideBanner = true
+	e.GET(s.config.HealthPath, func(c echo.Context) error {
+		return c.String(http.StatusOK, "healty")
+
+	})
 	for _, endpoint := range s.config.Endpoints {
 		e.Add(endpoint.Method, endpoint.Path, handler.GetHandler(endpoint))
 	}
