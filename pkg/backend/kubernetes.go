@@ -2,9 +2,12 @@ package backend
 
 import (
 	"bytes"
+	"errors"
 	"io"
+	"os"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/takutakahashi/container-api-gateway/pkg/types"
 	"github.com/thoas/go-funk"
 	batchv1 "k8s.io/api/batch/v1"
@@ -23,7 +26,10 @@ func (b KubernetesBackend) Execute(e types.Endpoint) (*bytes.Buffer, *bytes.Buff
 		panic(err)
 	}
 	jobsClient := clientset.BatchV1().Jobs("default")
-	name := e.Path[1:] + "-" + funk.RandomString(10)
+	name := e.Path[1:] + "-" + uuid.New().String()
+	env := funk.Map(e.Env, func(key string) corev1.EnvVar {
+		return corev1.EnvVar{Name: key, Value: os.Getenv(key)}
+	}).([]corev1.EnvVar)
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
@@ -31,25 +37,30 @@ func (b KubernetesBackend) Execute(e types.Endpoint) (*bytes.Buffer, *bytes.Buff
 		Spec: batchv1.JobSpec{
 			Template: corev1.PodTemplateSpec{
 				Spec: corev1.PodSpec{
+					RestartPolicy: corev1.RestartPolicyNever,
 					Containers: []corev1.Container{
 						{
 							Name:    "job",
 							Image:   e.Container.Image,
-							Command: e.Container.Command,
+							Command: e.BuildCommand(),
+							Env:     env,
 						},
 					},
 				},
 			},
 		},
 	}
-	jobsClient.Create(job)
+	_, err = jobsClient.Create(job)
+	if err != nil {
+		return nil, nil, err
+	}
 	for true {
-		job, err := jobsClient.Get(name, metav1.GetOptions{})
-		if err != nil {
-			return nil, nil, err
-		}
+		job, _ := jobsClient.Get(name, metav1.GetOptions{})
 		if job.Status.Succeeded > 0 {
 			break
+		}
+		if job.Status.Failed > 0 {
+			return nil, nil, errors.New("job failed")
 		}
 		time.Sleep(1 * time.Second)
 	}

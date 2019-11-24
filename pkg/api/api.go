@@ -51,7 +51,7 @@ func (s *Server) Start() {
 	default:
 		backend = b.DockerBackend{}
 	}
-	if _, err := rest.InClusterConfig(); err != nil {
+	if _, err := rest.InClusterConfig(); err == nil {
 		backend = b.KubernetesBackend{}
 	}
 	for _, endpoint := range s.config.Endpoints {
