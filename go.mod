@@ -20,7 +20,7 @@ require (
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0 // indirect
 	gopkg.in/yaml.v2 v2.2.4
 	k8s.io/api v0.0.0-20191121015604-11707872ac1c
-	k8s.io/apimachinery v0.0.0-20191123013113-aee2c0efe032
-	k8s.io/client-go v11.0.0+incompatible
+	k8s.io/apimachinery v0.0.0-20191121015412-41065c7a8c2a
+	k8s.io/client-go v0.0.0-20190620085101-78d2af792bab
 	k8s.io/utils v0.0.0-20191114200735-6ca3b61696b6 // indirect
 )
