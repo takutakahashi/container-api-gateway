@@ -6,6 +6,9 @@ rules:
 - apiGroups: ["batch"]
   resources: ["jobs"]
   verbs: ["get", "list", "create", "update", "delete"]
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["logs"]
 
 ---
 kind: RoleBinding
