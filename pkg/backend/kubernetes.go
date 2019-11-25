@@ -3,6 +3,7 @@ package backend
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"time"
@@ -71,7 +72,11 @@ func (b KubernetesBackend) Execute(e types.Endpoint) (*bytes.Buffer, *bytes.Buff
 		return nil, nil, err
 	}
 	defer podLogs.Close()
-
+	err = jobsClient.Delete(job.Name, &metav1.DeleteOptions{})
+	if err != nil {
+		return nil, nil, err
+	}
+	fmt.Println("job deleted")
 	buf := new(bytes.Buffer)
 	_, err = io.Copy(buf, podLogs)
 	if err != nil {
