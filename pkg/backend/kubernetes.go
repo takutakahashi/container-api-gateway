@@ -21,6 +21,14 @@ import (
 type KubernetesBackend struct{}
 
 func (b KubernetesBackend) Execute(e types.Endpoint) (*bytes.Buffer, *bytes.Buffer, error) {
+	if e.Async {
+		go execute(e)
+		return nil, nil, nil
+	}
+	return execute(e)
+}
+
+func (b KubernetesBackend) execute(e types.Endpoint) (*bytes.Buffer, *bytes.Buffer, error) {
 	config, err := rest.InClusterConfig()
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
