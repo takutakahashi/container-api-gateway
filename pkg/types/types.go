@@ -62,7 +62,8 @@ func (e *Endpoint) BuildCommand() []string {
 		}).([]Param)
 		if len(params) != 0 {
 			for _, param := range params {
-				cmd = strings.ReplaceAll(cmd, param.Name, ".Value")
+				target := "." + param.Name
+				cmd = strings.ReplaceAll(cmd, target, ".Value")
 				tmpl, _ := template.New(param.Name).Parse(cmd)
 				var doc bytes.Buffer
 				tmpl.Execute(&doc, param)
