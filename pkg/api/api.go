@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/takutakahashi/container-api-gateway/pkg/handler"
+	"k8s.io/client-go/rest"
 
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
@@ -49,6 +50,9 @@ func (s *Server) Start() {
 		backend = b.KubernetesBackend{}
 	default:
 		backend = b.DockerBackend{}
+	}
+	if _, err := rest.InClusterConfig(); err == nil {
+		backend = b.KubernetesBackend{}
 	}
 	for _, endpoint := range s.config.Endpoints {
 		e.Add(endpoint.Method, endpoint.Path, handler.GetHandler(endpoint, backend))
