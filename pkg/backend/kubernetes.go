@@ -21,14 +21,6 @@ import (
 type KubernetesBackend struct{}
 
 func (b KubernetesBackend) Execute(e types.Endpoint) (*bytes.Buffer, *bytes.Buffer, error) {
-	if e.Async {
-		go execute(e)
-		return nil, nil, nil
-	}
-	return execute(e)
-}
-
-func (b KubernetesBackend) execute(e types.Endpoint) (*bytes.Buffer, *bytes.Buffer, error) {
 	config, err := rest.InClusterConfig()
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
@@ -63,8 +55,19 @@ func (b KubernetesBackend) execute(e types.Endpoint) (*bytes.Buffer, *bytes.Buff
 	if err != nil {
 		return nil, nil, err
 	}
+	if e.Async {
+		go b.watchLog(job)
+		return nil, nil, nil
+	}
+	return b.watchLog(job)
+}
+
+func (b KubernetesBackend) watchLog(job *batchv1.Job) (*bytes.Buffer, *bytes.Buffer, error) {
+	config, err := rest.InClusterConfig()
+	clientset, err := kubernetes.NewForConfig(config)
+	jobsClient := clientset.BatchV1().Jobs(job.Namespace)
 	for true {
-		job, _ := jobsClient.Get(name, metav1.GetOptions{})
+		job, _ := jobsClient.Get(job.Name, metav1.GetOptions{})
 		if job.Status.Succeeded > 0 {
 			break
 		}
@@ -74,7 +77,7 @@ func (b KubernetesBackend) execute(e types.Endpoint) (*bytes.Buffer, *bytes.Buff
 		time.Sleep(1 * time.Second)
 	}
 	podsClient := clientset.CoreV1().Pods(job.Namespace)
-	req := podsClient.GetLogs(name, &corev1.PodLogOptions{})
+	req := podsClient.GetLogs(job.Name, &corev1.PodLogOptions{})
 	podLogs, err := req.Stream()
 	if err != nil {
 		return nil, nil, err

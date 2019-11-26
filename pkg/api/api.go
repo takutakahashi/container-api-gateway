@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -48,11 +49,14 @@ func (s *Server) Start() {
 	switch s.config.Backend {
 	case "k8s":
 		backend = b.KubernetesBackend{}
+		fmt.Println("use kubernetes")
 	default:
 		backend = b.DockerBackend{}
+		fmt.Println("use docker")
 	}
 	if _, err := rest.InClusterConfig(); err == nil {
 		backend = b.KubernetesBackend{}
+		fmt.Println("use kubernetes")
 	}
 	for _, endpoint := range s.config.Endpoints {
 		e.Add(endpoint.Method, endpoint.Path, handler.GetHandler(endpoint, backend))
