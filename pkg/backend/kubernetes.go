@@ -24,11 +24,11 @@ func (b KubernetesBackend) Execute(e types.Endpoint) (*bytes.Buffer, *bytes.Buff
 	config, err := rest.InClusterConfig()
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		panic(err)
+		return nil, nil, err
 	}
 	jobsClient := clientset.BatchV1().Jobs(namespace)
 	name := e.Path[1:] + "-" + uuid.New().String()
-	var sd map[string]string
+	sd := make(map[string]string)
 	for _, key := range e.Env {
 		sd[key] = os.Getenv(key)
 	}
