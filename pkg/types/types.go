@@ -22,12 +22,13 @@ type Config struct {
 	Endpoints  []Endpoint `yaml:"endpoints"`
 }
 type Endpoint struct {
-	Path      string    `yaml:"path"`
-	Method    string    `yaml:"method"`
-	Async     bool      `yaml:"async"`
-	Params    []Param   `yaml:"params"`
-	Env       []string  `yaml:"env"`
-	Container Container `yaml:"container"`
+	Path       string    `yaml:"path"`
+	Method     string    `yaml:"method"`
+	Async      bool      `yaml:"async"`
+	Params     []Param   `yaml:"params"`
+	SecretName string    `yaml:"secretName"`
+	Env        []string  `yaml:"env"`
+	Container  Container `yaml:"container"`
 }
 
 type Container struct {

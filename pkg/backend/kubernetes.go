@@ -10,7 +10,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/takutakahashi/container-api-gateway/pkg/types"
-	"github.com/thoas/go-funk"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -21,16 +20,35 @@ import (
 type KubernetesBackend struct{}
 
 func (b KubernetesBackend) Execute(e types.Endpoint) (*bytes.Buffer, *bytes.Buffer, error) {
+	namespace := "default"
 	config, err := rest.InClusterConfig()
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		panic(err)
 	}
-	jobsClient := clientset.BatchV1().Jobs("default")
+	jobsClient := clientset.BatchV1().Jobs(namespace)
 	name := e.Path[1:] + "-" + uuid.New().String()
-	env := funk.Map(e.Env, func(key string) corev1.EnvVar {
-		return corev1.EnvVar{Name: key, Value: os.Getenv(key)}
-	}).([]corev1.EnvVar)
+	var sd map[string]string
+	for _, key := range e.Env {
+		sd[key] = os.Getenv(key)
+	}
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name + "-env",
+			Namespace: namespace,
+		},
+		StringData: sd,
+		Type:       corev1.SecretTypeOpaque,
+	}
+	secretsClient := clientset.CoreV1().Secrets(secret.Namespace)
+	if _, err = secretsClient.Create(secret); err != nil {
+		if _, err := secretsClient.Get(secret.Name, metav1.GetOptions{}); err != nil {
+			return nil, nil, err
+		}
+		if _, err = secretsClient.Update(secret); err != nil {
+			return nil, nil, err
+		}
+	}
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
@@ -44,7 +62,15 @@ func (b KubernetesBackend) Execute(e types.Endpoint) (*bytes.Buffer, *bytes.Buff
 							Name:    "job",
 							Image:   e.Container.Image,
 							Command: e.BuildCommand(),
-							Env:     env,
+							EnvFrom: []corev1.EnvFromSource{
+								corev1.EnvFromSource{
+									SecretRef: &corev1.SecretEnvSource{
+										LocalObjectReference: corev1.LocalObjectReference{
+											Name: secret.Name,
+										},
+									},
+								},
+							},
 						},
 					},
 				},
