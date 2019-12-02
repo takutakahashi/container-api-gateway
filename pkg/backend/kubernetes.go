@@ -92,6 +92,7 @@ func (b KubernetesBackend) watchLog(job *batchv1.Job) (*bytes.Buffer, *bytes.Buf
 	config, err := rest.InClusterConfig()
 	clientset, err := kubernetes.NewForConfig(config)
 	jobsClient := clientset.BatchV1().Jobs(job.Namespace)
+	secretsClient := clientset.CoreV1().Secrets(job.Namespace)
 	for true {
 		job, _ := jobsClient.Get(job.Name, metav1.GetOptions{})
 		if job.Status.Succeeded > 0 {
@@ -109,10 +110,7 @@ func (b KubernetesBackend) watchLog(job *batchv1.Job) (*bytes.Buffer, *bytes.Buf
 		return nil, nil, err
 	}
 	defer podLogs.Close()
-	err = jobsClient.Delete(job.Name, &metav1.DeleteOptions{})
-	if err != nil {
-		return nil, nil, err
-	}
+	secretsClient.Delete(job.Spec.Template.Spec.Containers[0].EnvFrom[0].SecretRef.Name, &metav1.DeleteOptions{})
 	fmt.Println("job deleted")
 	buf := new(bytes.Buffer)
 	_, err = io.Copy(buf, podLogs)
