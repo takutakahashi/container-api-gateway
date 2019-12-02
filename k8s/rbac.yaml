@@ -9,6 +9,9 @@ rules:
 - apiGroups: [""]
   resources: ["pods"]
   verbs: ["logs"]
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get", "create", "update", "delete"]
 
 ---
 kind: RoleBinding
