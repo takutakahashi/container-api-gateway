@@ -2,7 +2,6 @@ package backend
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -12,6 +11,7 @@ import (
 	"github.com/takutakahashi/container-api-gateway/pkg/types"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -51,7 +51,8 @@ func (b KubernetesBackend) Execute(e types.Endpoint) (*bytes.Buffer, *bytes.Buff
 	}
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: name,
+			Name:      name,
+			Namespace: namespace,
 		},
 		Spec: batchv1.JobSpec{
 			Template: corev1.PodTemplateSpec{
@@ -94,17 +95,32 @@ func (b KubernetesBackend) watchLog(job *batchv1.Job) (*bytes.Buffer, *bytes.Buf
 	jobsClient := clientset.BatchV1().Jobs(job.Namespace)
 	secretsClient := clientset.CoreV1().Secrets(job.Namespace)
 	for true {
-		job, _ := jobsClient.Get(job.Name, metav1.GetOptions{})
-		if job.Status.Succeeded > 0 {
-			break
+		j, err := jobsClient.Get(job.Name, metav1.GetOptions{})
+		if err != nil {
+			return nil, nil, err
 		}
-		if job.Status.Failed > 0 {
-			return nil, nil, errors.New("job failed")
+		if j.Status.Succeeded > 0 {
+			break
 		}
 		time.Sleep(1 * time.Second)
 	}
+	fmt.Println("job succeeded")
 	podsClient := clientset.CoreV1().Pods(job.Namespace)
-	req := podsClient.GetLogs(job.Name, &corev1.PodLogOptions{})
+	pods, err := podsClient.List(metav1.ListOptions{})
+	if err != nil {
+		return nil, nil, err
+	}
+	var pod v1.Pod
+	fmt.Println(pods.Items)
+	for _, p := range pods.Items {
+		fmt.Println(p.Labels)
+		if val, ok := p.Labels["job-name"]; ok && val == job.Name {
+			pod = p
+			break
+		}
+	}
+	fmt.Println(pod.Name)
+	req := podsClient.GetLogs(pod.Name, &corev1.PodLogOptions{})
 	podLogs, err := req.Stream()
 	if err != nil {
 		return nil, nil, err

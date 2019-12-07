@@ -7,11 +7,14 @@ rules:
   resources: ["jobs"]
   verbs: ["get", "list", "create", "update", "delete"]
 - apiGroups: [""]
+  resources: ["pods/log"]
+  verbs: ["get", "create"]
+- apiGroups: [""]
   resources: ["pods"]
-  verbs: ["logs"]
+  verbs: ["list", "get", "create", "update", "delete"]
 - apiGroups: [""]
   resources: ["secrets"]
-  verbs: ["get", "create", "update", "delete"]
+  verbs: ["list", "get", "create", "update", "delete"]
 
 ---
 kind: RoleBinding
