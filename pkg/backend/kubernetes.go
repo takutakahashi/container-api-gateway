@@ -111,7 +111,6 @@ func (b KubernetesBackend) watchLog(job *batchv1.Job) (*bytes.Buffer, *bytes.Buf
 		return nil, nil, err
 	}
 	var pod v1.Pod
-	fmt.Println(pods.Items)
 	for _, p := range pods.Items {
 		fmt.Println(p.Labels)
 		if val, ok := p.Labels["job-name"]; ok && val == job.Name {
@@ -119,7 +118,6 @@ func (b KubernetesBackend) watchLog(job *batchv1.Job) (*bytes.Buffer, *bytes.Buf
 			break
 		}
 	}
-	fmt.Println(pod.Name)
 	req := podsClient.GetLogs(pod.Name, &corev1.PodLogOptions{})
 	podLogs, err := req.Stream()
 	if err != nil {

@@ -1,6 +1,9 @@
 package handler
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/labstack/echo"
@@ -28,15 +31,19 @@ func GetHandler(endpoint types.Endpoint, b types.BaseBackend) echo.HandlerFunc {
 			params[i] = param
 		}
 		endpoint.Params = params
-		stdout, stderr, err := b.Execute(endpoint)
+		stdout, _, err := b.Execute(endpoint)
 		if err != nil {
 			return c.String(http.StatusInternalServerError, err.Error())
 		} else {
-
-			return c.JSON(http.StatusOK, &Response{
-				Stdout: stdout.String(),
-				Stderr: stderr.String(),
-			})
+			var o interface{}
+			in := bytes.Replace(stdout.Bytes(), []byte("'"), []byte("\""), -1)
+			fmt.Println(string(in))
+			err = json.Unmarshal(in, &o)
+			fmt.Println(o)
+			if err != nil {
+				return c.String(http.StatusInternalServerError, err.Error())
+			}
+			return c.JSON(http.StatusOK, o)
 		}
 	}
 }
