@@ -8,4 +8,5 @@ RUN cd /src && GO111MODULE=on go build -o cgw cmd/cmd.go
 FROM alpine
 WORKDIR /app
 COPY --from=build-env /src/cgw /app/cgw
+COPY --from=build-env /src/src/template/form.html /app/src/template/form.html
 CMD ['./cgw', ' --config', './config.yaml']
