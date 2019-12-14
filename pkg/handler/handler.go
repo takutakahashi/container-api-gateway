@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/labstack/echo"
+	"github.com/leekchan/gtf"
 	"github.com/takutakahashi/container-api-gateway/pkg/types"
 )
 
@@ -36,14 +38,34 @@ func GetHandler(endpoint types.Endpoint, b types.BaseBackend) echo.HandlerFunc {
 			return c.String(http.StatusInternalServerError, err.Error())
 		} else {
 			var o interface{}
-			in := bytes.Replace(stdout.Bytes(), []byte("'"), []byte("\""), -1)
-			fmt.Println(string(in))
-			err = json.Unmarshal(in, &o)
-			fmt.Println(o)
-			if err != nil {
-				return c.String(http.StatusInternalServerError, err.Error())
+			if stdout != nil {
+				in := bytes.Replace(stdout.Bytes(), []byte("'"), []byte("\""), 0)
+				fmt.Println(string(in))
+				err = json.Unmarshal(in, &o)
+				fmt.Println(o)
+				if err != nil {
+					return c.String(http.StatusInternalServerError, err.Error())
+				}
+				return c.JSON(http.StatusOK, o)
+			} else {
+				return c.NoContent(http.StatusOK)
 			}
-			return c.JSON(http.StatusOK, o)
 		}
+	}
+}
+
+func GetFormHandler(endpoint types.Endpoint) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		tmpl, err := gtf.New("form.html").ParseFiles("./src/template/form.html")
+		if err != nil {
+			return c.String(http.StatusInternalServerError, err.Error())
+		}
+		var buf bytes.Buffer
+		err = tmpl.Execute(&buf, endpoint)
+		if err != nil {
+			log.Println("executing error")
+			return c.String(http.StatusInternalServerError, err.Error())
+		}
+		return c.HTML(http.StatusOK, buf.String())
 	}
 }

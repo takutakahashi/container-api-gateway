@@ -1,0 +1,18 @@
+{{- $e := . }}
+<body>
+  <form action="add" method="post">
+  {{- range .Params }}
+  <p><label>{{- .Description }}</label>
+    {{- if .Choices }}
+     <select name={{ .Name }}>
+       {{- range .Choices }}
+      <option value="{{ .Value | default .Name }}">{{ .Name }}</option>
+      {{- end }}
+    </select> 
+    {{- else }}
+    <input name={{ .Name }} type={{ .Type | default "text" }} /></p>
+    {{- end }}
+  {{- end }}
+  <input type="submit" value="send">
+</form>
+</body>

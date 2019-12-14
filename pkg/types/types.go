@@ -25,6 +25,7 @@ type Endpoint struct {
 	Path       string    `yaml:"path"`
 	Method     string    `yaml:"method"`
 	Async      bool      `yaml:"async"`
+	Form       bool      `yaml:"form"`
 	Params     []Param   `yaml:"params"`
 	SecretName string    `yaml:"secretName"`
 	Env        []string  `yaml:"env"`
@@ -38,10 +39,17 @@ type Container struct {
 }
 
 type Param struct {
-	Name     string `yaml:"name"`
-	Type     string `yaml:"type"`
-	Value    string `yaml:"default"`
-	Optional bool   `yaml:"optional"`
+	Name        string   `yaml:"name"`
+	Description string   `yaml:"description"`
+	Type        string   `yaml:"type"`
+	Value       string   `yaml:"default"`
+	Choices     []Choice `yaml:"choice"`
+	Optional    bool     `yaml:"optional"`
+}
+
+type Choice struct {
+	Name  string `yaml:"name"`
+	Value string `yaml:"value"`
 }
 
 func (c *Config) GenServerURI() string {

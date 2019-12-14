@@ -60,6 +60,9 @@ func (s *Server) Start() {
 	}
 	for _, endpoint := range s.config.Endpoints {
 		e.Add(endpoint.Method, endpoint.Path, handler.GetHandler(endpoint, backend))
+		if endpoint.Form {
+			e.Add("GET", endpoint.Path, handler.GetFormHandler(endpoint))
+		}
 	}
 	e.Start(s.config.GenServerURI())
 }

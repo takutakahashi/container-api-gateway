@@ -13,6 +13,7 @@ require (
 	github.com/googleapis/gnostic v0.3.1 // indirect
 	github.com/labstack/echo v3.3.10+incompatible
 	github.com/labstack/gommon v0.3.0 // indirect
+	github.com/leekchan/gtf v0.0.0-20190214083521-5fba33c5b00b
 	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
 	github.com/thoas/go-funk v0.4.0
 	github.com/urfave/cli v1.22.1
