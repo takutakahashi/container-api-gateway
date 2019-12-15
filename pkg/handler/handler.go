@@ -39,7 +39,7 @@ func GetHandler(endpoint types.Endpoint, b types.BaseBackend) echo.HandlerFunc {
 		} else {
 			var o interface{}
 			if stdout != nil {
-				in := bytes.Replace(stdout.Bytes(), []byte("'"), []byte("\""), 0)
+				in := bytes.Replace(stdout.Bytes(), []byte("'"), []byte("\""), -1)
 				fmt.Println(string(in))
 				err = json.Unmarshal(in, &o)
 				fmt.Println(o)
