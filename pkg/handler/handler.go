@@ -48,7 +48,7 @@ func GetHandler(endpoint types.Endpoint, b types.BaseBackend) echo.HandlerFunc {
 				}
 				return c.JSON(http.StatusOK, o)
 			} else {
-				return c.NoContent(http.StatusOK)
+				return c.String(http.StatusOK, endpoint.Response)
 			}
 		}
 	}

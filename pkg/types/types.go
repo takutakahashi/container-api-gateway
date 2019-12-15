@@ -26,6 +26,7 @@ type Endpoint struct {
 	Method     string    `yaml:"method"`
 	Async      bool      `yaml:"async"`
 	Form       bool      `yaml:"form"`
+	Response   string    `yaml:"response"`
 	Params     []Param   `yaml:"params"`
 	SecretName string    `yaml:"secretName"`
 	Env        []string  `yaml:"env"`
