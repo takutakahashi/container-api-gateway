@@ -22,18 +22,19 @@ type Config struct {
 	Endpoints  []Endpoint `yaml:"endpoints"`
 }
 type Endpoint struct {
-	Path       string    `yaml:"path"`
-	Method     string    `yaml:"method"`
-	Async      bool      `yaml:"async"`
-	Form       bool      `yaml:"form"`
-	Response   string    `yaml:"response"`
-	Params     []Param   `yaml:"params"`
-	SecretName string    `yaml:"secretName"`
-	Env        []string  `yaml:"env"`
-	Container  Container `yaml:"container"`
+	Path       string      `yaml:"path"`
+	Method     string      `yaml:"method"`
+	Async      bool        `yaml:"async"`
+	Form       bool        `yaml:"form"`
+	Response   string      `yaml:"response"`
+	Params     []Param     `yaml:"params"`
+	SecretName string      `yaml:"secretName"`
+	Env        []string    `yaml:"env"`
+	Containers []Container `yaml:"containers"`
 }
 
 type Container struct {
+	Name    string   `yaml:"name"`
 	Image   string   `yaml:"image"`
 	Command []string `yaml:"command"` // contains go template
 
@@ -64,9 +65,9 @@ func (c *Config) GenServerURI() string {
 }
 
 // BuildCommand build command with params
-func (e *Endpoint) BuildCommand() []string {
+func (e *Endpoint) BuildCommand(c Container) []string {
 	result := []string{}
-	for _, cmd := range e.Container.Command {
+	for _, cmd := range c.Command {
 		params := funk.Filter(e.Params, func(p Param) bool {
 			return strings.Contains(cmd, p.Name)
 		}).([]Param)
