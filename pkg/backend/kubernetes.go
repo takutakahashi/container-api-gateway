@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/takutakahashi/container-api-gateway/pkg/types"
+	"github.com/thoas/go-funk"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
@@ -49,6 +50,22 @@ func (b KubernetesBackend) Execute(e types.Endpoint) (*bytes.Buffer, *bytes.Buff
 			return nil, nil, err
 		}
 	}
+	containers := funk.Map(e.Containers, func(c types.Container) corev1.Container {
+		return corev1.Container{
+			Name:    c.Name,
+			Image:   c.Image,
+			Command: e.BuildCommand(c),
+			EnvFrom: []corev1.EnvFromSource{
+				corev1.EnvFromSource{
+					SecretRef: &corev1.SecretEnvSource{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: secret.Name,
+						},
+					},
+				},
+			},
+		}
+	}).([]corev1.Container)
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -58,22 +75,7 @@ func (b KubernetesBackend) Execute(e types.Endpoint) (*bytes.Buffer, *bytes.Buff
 			Template: corev1.PodTemplateSpec{
 				Spec: corev1.PodSpec{
 					RestartPolicy: corev1.RestartPolicyNever,
-					Containers: []corev1.Container{
-						{
-							Name:    "job",
-							Image:   e.Container.Image,
-							Command: e.BuildCommand(),
-							EnvFrom: []corev1.EnvFromSource{
-								corev1.EnvFromSource{
-									SecretRef: &corev1.SecretEnvSource{
-										LocalObjectReference: corev1.LocalObjectReference{
-											Name: secret.Name,
-										},
-									},
-								},
-							},
-						},
-					},
+					Containers:    containers,
 				},
 			},
 		},

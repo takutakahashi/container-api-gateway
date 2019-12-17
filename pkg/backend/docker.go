@@ -31,34 +31,36 @@ func execute(e ctypes.Endpoint) (*bytes.Buffer, *bytes.Buffer, error) {
 		return nil, nil, err
 	}
 	name := funk.RandomString(10)
-	progress, err := cli.ImagePull(ctx, e.Container.Image, types.ImagePullOptions{})
-	if err != nil {
-		return nil, nil, err
+	for _, c := range e.Containers {
+		progress, err := cli.ImagePull(ctx, c.Image, types.ImagePullOptions{})
+		if err != nil {
+			return nil, nil, err
+		}
+		io.Copy(os.Stdout, progress)
+		resp, err := cli.ContainerCreate(ctx, &container.Config{
+			Image: c.Image,
+			Cmd:   e.BuildCommand(c),
+			Env:   e.BuildEnv(),
+		}, nil, nil, name)
+		if err != nil {
+			return nil, nil, err
+		}
+		if err := cli.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{}); err != nil {
+			return nil, nil, err
+		}
+		if _, err = cli.ContainerWait(ctx, resp.ID); err != nil {
+			return nil, nil, err
+		}
+		out, err := cli.ContainerLogs(ctx, resp.ID, types.ContainerLogsOptions{ShowStdout: true, ShowStderr: true})
+		if err != nil {
+			return nil, nil, err
+		}
+		go cli.ContainerRemove(ctx, resp.ID, types.ContainerRemoveOptions{})
+		stdout, stderr := new(bytes.Buffer), new(bytes.Buffer)
+		stdcopy.StdCopy(stdout, stderr, out)
+		if err != nil {
+			return nil, nil, err
+		}
 	}
-	io.Copy(os.Stdout, progress)
-	resp, err := cli.ContainerCreate(ctx, &container.Config{
-		Image: e.Container.Image,
-		Cmd:   e.BuildCommand(),
-		Env:   e.BuildEnv(),
-	}, nil, nil, name)
-	if err != nil {
-		return nil, nil, err
-	}
-	if err := cli.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{}); err != nil {
-		return nil, nil, err
-	}
-	if _, err = cli.ContainerWait(ctx, resp.ID); err != nil {
-		return nil, nil, err
-	}
-	out, err := cli.ContainerLogs(ctx, resp.ID, types.ContainerLogsOptions{ShowStdout: true, ShowStderr: true})
-	if err != nil {
-		return nil, nil, err
-	}
-	go cli.ContainerRemove(ctx, resp.ID, types.ContainerRemoveOptions{})
-	stdout, stderr := new(bytes.Buffer), new(bytes.Buffer)
-	stdcopy.StdCopy(stdout, stderr, out)
-	if err != nil {
-		return nil, nil, err
-	}
-	return stdout, stderr, nil
+	return nil, nil, nil
 }
