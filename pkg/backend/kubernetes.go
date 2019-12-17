@@ -120,7 +120,7 @@ func (b KubernetesBackend) watchLog(job *batchv1.Job) (*bytes.Buffer, *bytes.Buf
 			break
 		}
 	}
-	req := podsClient.GetLogs(pod.Name, &corev1.PodLogOptions{})
+	req := podsClient.GetLogs(pod.Name, &corev1.PodLogOptions{Container: "main"})
 	podLogs, err := req.Stream()
 	if err != nil {
 		return nil, nil, err
