@@ -23,15 +23,16 @@ type Config struct {
 	Endpoints  []Endpoint `yaml:"endpoints"`
 }
 type Endpoint struct {
-	Path       string      `yaml:"path"`
-	Method     string      `yaml:"method"`
-	Async      bool        `yaml:"async"`
-	Form       bool        `yaml:"form"`
-	Response   string      `yaml:"response"`
-	Params     []Param     `yaml:"params"`
-	SecretName string      `yaml:"secretName"`
-	Env        []string    `yaml:"env"`
-	Containers []Container `yaml:"containers"`
+	Path        string      `yaml:"path"`
+	Method      string      `yaml:"method"`
+	Async       bool        `yaml:"async"`
+	Form        bool        `yaml:"form"`
+	TemplateURL string      `yaml:"template_url"`
+	Response    string      `yaml:"response"`
+	Params      []Param     `yaml:"params"`
+	SecretName  string      `yaml:"secretName"`
+	Env         []string    `yaml:"env"`
+	Containers  []Container `yaml:"containers"`
 }
 
 type Container struct {

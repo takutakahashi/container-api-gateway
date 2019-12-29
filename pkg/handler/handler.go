@@ -61,15 +61,31 @@ func GetFormHandler(baseURL string, endpoint types.Endpoint) echo.HandlerFunc {
 			Endpoint types.Endpoint
 			Base     string
 		}
-		tmpl, err := template.New("form.html").Funcs(gtf.GtfTextFuncMap).ParseFiles("./src/template/form.html")
-		if err != nil {
-			return c.String(http.StatusInternalServerError, err.Error())
-		}
 		var buf bytes.Buffer
-		err = tmpl.Execute(&buf, s{Endpoint: endpoint, Base: baseURL})
-		if err != nil {
-			log.Println("executing error")
-			return c.String(http.StatusInternalServerError, err.Error())
+		if endpoint.TemplateURL != "" {
+			fmt.Println("use external template")
+			resp, err := http.Get(endpoint.TemplateURL)
+			if err != nil {
+				return c.String(http.StatusInternalServerError, err.Error())
+			}
+			b := new(bytes.Buffer)
+			b.ReadFrom(resp.Body)
+			tmpl, err := template.New("form.html").Funcs(gtf.GtfTextFuncMap).Parse(b.String())
+			err = tmpl.Execute(&buf, s{Endpoint: endpoint, Base: baseURL})
+			if err != nil {
+				log.Println("executing error")
+				return c.String(http.StatusInternalServerError, err.Error())
+			}
+		} else {
+			tmpl, err := template.New("form.html").Funcs(gtf.GtfTextFuncMap).ParseFiles("./src/template/form.html")
+			if err != nil {
+				return c.String(http.StatusInternalServerError, err.Error())
+			}
+			err = tmpl.Execute(&buf, s{Endpoint: endpoint, Base: baseURL})
+			if err != nil {
+				log.Println("executing error")
+				return c.String(http.StatusInternalServerError, err.Error())
+			}
 		}
 		return c.HTML(http.StatusOK, buf.String())
 	}
