@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"text/template"
 
 	"github.com/labstack/echo"
 	"github.com/leekchan/gtf"
@@ -54,14 +55,18 @@ func GetHandler(endpoint types.Endpoint, b types.BaseBackend) echo.HandlerFunc {
 	}
 }
 
-func GetFormHandler(endpoint types.Endpoint) echo.HandlerFunc {
+func GetFormHandler(baseURL string, endpoint types.Endpoint) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		tmpl, err := gtf.New("form.html").ParseFiles("./src/template/form.html")
+		type s struct {
+			Endpoint types.Endpoint
+			Base     string
+		}
+		tmpl, err := template.New("form.html").Funcs(gtf.GtfTextFuncMap).ParseFiles("./src/template/form.html")
 		if err != nil {
 			return c.String(http.StatusInternalServerError, err.Error())
 		}
 		var buf bytes.Buffer
-		err = tmpl.Execute(&buf, endpoint)
+		err = tmpl.Execute(&buf, s{Endpoint: endpoint, Base: baseURL})
 		if err != nil {
 			log.Println("executing error")
 			return c.String(http.StatusInternalServerError, err.Error())

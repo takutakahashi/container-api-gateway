@@ -15,6 +15,7 @@ type BaseBackend interface {
 }
 
 type Config struct {
+	BaseURL    string `yaml:"baseURL"`
 	Host       string
 	Port       string
 	HealthPath string     `yaml:"healthcheckPath"`
