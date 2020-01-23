@@ -7,9 +7,11 @@ import (
 	"log"
 	"net/http"
 	"text/template"
+	"time"
 
 	"github.com/labstack/echo"
 	"github.com/leekchan/gtf"
+	"github.com/patrickmn/go-cache"
 	"github.com/takutakahashi/container-api-gateway/pkg/types"
 )
 
@@ -34,7 +36,27 @@ func GetHandler(endpoint types.Endpoint, b types.BaseBackend) echo.HandlerFunc {
 			params[i] = param
 		}
 		endpoint.Params = params
-		stdout, _, err := b.Execute(endpoint)
+		if endpoint.Cache.Store == nil {
+			endpoint.Cache.Store = cache.New(endpoint.Cache.Expire*time.Minute, endpoint.Cache.Expire*time.Minute)
+		}
+		var stdout *bytes.Buffer
+		var err error
+		if endpoint.Cache.Enabled {
+			fmt.Println("try to get from cache")
+			var found bool
+			stdout, found = endpoint.Cache.GetStdout(fmt.Sprintf("%v", endpoint.Params))
+			fmt.Println(found)
+			if found {
+				err = nil
+			} else {
+				stdout, _, err = b.Execute(endpoint)
+				if err == nil {
+					endpoint.Cache.SetStdout(fmt.Sprintf("%v", endpoint.Params), stdout)
+				}
+			}
+		} else {
+			stdout, _, err = b.Execute(endpoint)
+		}
 		if err != nil {
 			return c.String(http.StatusInternalServerError, err.Error())
 		} else {

@@ -4,8 +4,14 @@ backend: docker
 endpoints:
   - path: /test
     method: GET
-    container:
-      image: hello-world
+    cache:
+      enabled: true
+      expire: 1
+    containers:
+    - name: main
+      image: docker.io/library/hello-world
+    - name: sub
+      image: docker.io/library/hello-world
   - path: /async
     method: GET
     async: true
