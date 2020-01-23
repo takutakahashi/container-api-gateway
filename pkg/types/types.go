@@ -6,7 +6,9 @@ import (
 	"html/template"
 	"os"
 	"strings"
+	"time"
 
+	"github.com/patrickmn/go-cache"
 	"github.com/thoas/go-funk"
 )
 
@@ -25,6 +27,7 @@ type Config struct {
 type Endpoint struct {
 	Path        string      `yaml:"path"`
 	Method      string      `yaml:"method"`
+	Cache       Cache       `yaml:"cache"`
 	Async       bool        `yaml:"async"`
 	Form        bool        `yaml:"form"`
 	TemplateURL string      `yaml:"template_url"`
@@ -54,6 +57,26 @@ type Param struct {
 type Choice struct {
 	Name  string `yaml:"name"`
 	Value string `yaml:"value"`
+}
+
+type Cache struct {
+	Enabled bool          `yaml:"enabled"`
+	Expire  time.Duration `yaml:"expire"`
+	Store   *cache.Cache
+}
+
+func (c Cache) GetStdout(key string) (*bytes.Buffer, bool) {
+	fmt.Println("key: " + key)
+	val, found := c.Store.Get(key)
+	if !found {
+		return nil, found
+	}
+	return val.(*bytes.Buffer), found
+}
+func (c Cache) SetStdout(key string, val *bytes.Buffer) {
+	fmt.Println("key: " + key)
+	fmt.Println(fmt.Sprintf("val: %v", val))
+	c.Store.Set(key, val, c.Expire*time.Minute)
 }
 
 func (c *Config) GenServerURI() string {
