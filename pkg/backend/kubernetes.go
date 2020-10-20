@@ -56,7 +56,7 @@ func (b KubernetesBackend) Execute(e types.Endpoint) (*bytes.Buffer, *bytes.Buff
 			Image:   c.Image,
 			Command: e.BuildCommand(c),
 			EnvFrom: []corev1.EnvFromSource{
-				corev1.EnvFromSource{
+				{
 					SecretRef: &corev1.SecretEnvSource{
 						LocalObjectReference: corev1.LocalObjectReference{
 							Name: secret.Name,
