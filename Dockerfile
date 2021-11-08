@@ -1,5 +1,5 @@
 # build stage
-FROM golang:alpine AS build-env
+FROM golang:alpine3.11 AS build-env
 RUN apk --no-cache add build-base git bzr mercurial gcc
 ADD . /src
 RUN cd /src && GO111MODULE=on go build -o cgw cmd/cmd.go
