@@ -1,5 +1,5 @@
 # build stage
-FROM golang:1.23 AS build-env
+FROM golang:1.24 AS build-env
 RUN apt update && apt install -y build-essential git bzr mercurial gcc
 ADD . /src
 RUN cd /src && GO111MODULE=on go build -o cgw cmd/cmd.go
