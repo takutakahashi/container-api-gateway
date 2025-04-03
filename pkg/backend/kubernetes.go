@@ -2,6 +2,7 @@ package backend
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -12,7 +13,6 @@ import (
 	"github.com/thoas/go-funk"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -24,6 +24,9 @@ type KubernetesBackend struct{}
 func (b KubernetesBackend) Execute(e types.Endpoint) (*bytes.Buffer, *bytes.Buffer, error) {
 	namespace := "default"
 	config, err := rest.InClusterConfig()
+	if err != nil {
+		return nil, nil, err
+	}
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		return nil, nil, err
@@ -43,11 +46,12 @@ func (b KubernetesBackend) Execute(e types.Endpoint) (*bytes.Buffer, *bytes.Buff
 		Type:       corev1.SecretTypeOpaque,
 	}
 	secretsClient := clientset.CoreV1().Secrets(secret.Namespace)
-	if _, err = secretsClient.Create(secret); err != nil {
-		if _, err := secretsClient.Get(secret.Name, metav1.GetOptions{}); err != nil {
+	ctx := context.Background()
+	if _, err = secretsClient.Create(ctx, secret, metav1.CreateOptions{}); err != nil {
+		if _, err := secretsClient.Get(ctx, secret.Name, metav1.GetOptions{}); err != nil {
 			return nil, nil, err
 		}
-		if _, err = secretsClient.Update(secret); err != nil {
+		if _, err = secretsClient.Update(ctx, secret, metav1.UpdateOptions{}); err != nil {
 			return nil, nil, err
 		}
 	}
@@ -83,7 +87,7 @@ func (b KubernetesBackend) Execute(e types.Endpoint) (*bytes.Buffer, *bytes.Buff
 			},
 		},
 	}
-	_, err = jobsClient.Create(job)
+	_, err = jobsClient.Create(ctx, job, metav1.CreateOptions{})
 	if err != nil {
 		return nil, nil, err
 	}
@@ -96,11 +100,18 @@ func (b KubernetesBackend) Execute(e types.Endpoint) (*bytes.Buffer, *bytes.Buff
 
 func (b KubernetesBackend) watchLog(job *batchv1.Job) (*bytes.Buffer, *bytes.Buffer, error) {
 	config, err := rest.InClusterConfig()
+	if err != nil {
+		return nil, nil, err
+	}
 	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return nil, nil, err
+	}
 	jobsClient := clientset.BatchV1().Jobs(job.Namespace)
 	secretsClient := clientset.CoreV1().Secrets(job.Namespace)
-	for true {
-		j, err := jobsClient.Get(job.Name, metav1.GetOptions{})
+	ctx := context.Background()
+	for {
+		j, err := jobsClient.Get(ctx, job.Name, metav1.GetOptions{})
 		if err != nil {
 			return nil, nil, err
 		}
@@ -111,11 +122,11 @@ func (b KubernetesBackend) watchLog(job *batchv1.Job) (*bytes.Buffer, *bytes.Buf
 	}
 	fmt.Println("job succeeded")
 	podsClient := clientset.CoreV1().Pods(job.Namespace)
-	pods, err := podsClient.List(metav1.ListOptions{})
+	pods, err := podsClient.List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, nil, err
 	}
-	var pod v1.Pod
+	var pod corev1.Pod
 	for _, p := range pods.Items {
 		fmt.Println(p.Labels)
 		if val, ok := p.Labels["job-name"]; ok && val == job.Name {
@@ -124,12 +135,13 @@ func (b KubernetesBackend) watchLog(job *batchv1.Job) (*bytes.Buffer, *bytes.Buf
 		}
 	}
 	req := podsClient.GetLogs(pod.Name, &corev1.PodLogOptions{Container: "main"})
-	podLogs, err := req.Stream()
+
+	podLogs, err := req.Stream(ctx)
 	if err != nil {
 		return nil, nil, err
 	}
 	defer podLogs.Close()
-	secretsClient.Delete(job.Spec.Template.Spec.Containers[0].EnvFrom[0].SecretRef.Name, &metav1.DeleteOptions{})
+	secretsClient.Delete(ctx, job.Spec.Template.Spec.Containers[0].EnvFrom[0].SecretRef.Name, metav1.DeleteOptions{})
 	fmt.Println("job deleted")
 	buf := new(bytes.Buffer)
 	_, err = io.Copy(buf, podLogs)

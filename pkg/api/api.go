@@ -51,8 +51,7 @@ func (s *Server) Start() {
 		backend = b.KubernetesBackend{}
 		fmt.Println("use kubernetes")
 	default:
-		backend = b.DockerBackend{}
-		fmt.Println("use docker")
+		backend = b.KubernetesBackend{}
 	}
 	if _, err := rest.InClusterConfig(); err == nil {
 		backend = b.KubernetesBackend{}
